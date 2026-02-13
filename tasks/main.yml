@@ -14,17 +14,17 @@
   when: ansible_os_family == 'RedHat'
 
 - name: "Determine mount for /var/spool/squid"
-  shell: "findmnt --target /var/spool/squid | tail -n +2 | awk '{ print $1 };'"
+  ansible.builtin.shell: "findmnt --target /var/spool/squid | tail -n +2 | awk '{ print $1 };'"
   register: squid_mount
   changed_when: false
   failed_when: squid_mount.rc != 0 or squid_mount.stdout | length == 0
 
 - name: "Determine squid volume size in GB"
-  set_fact:
+  ansible.builtin.set_fact:
     squid_volume_size: "{{ (ansible_mounts | selectattr('mount', 'equalto', squid_mount.stdout) | list | first).size_total // (1024 * 1024 * 1024) }}"
 
 - name: "Write squid configuration"
-  template:
+  ansible.builtin.template:
     src: squid.conf.j2
     dest: /etc/squid/squid.conf
     owner: "root"
@@ -42,9 +42,9 @@
   when: ansible_os_family == 'Debian'
 
 - name: "FirewallD: enable port"
-  firewalld:
-    immediate: yes
-    permanent: yes
+  ansible.posix.firewalld:
+    immediate: true
+    permanent: true
     port: "{{ item }}/tcp"
     state: enabled
   with_items:
@@ -52,7 +52,7 @@
   when: ansible_os_family == 'RedHat'
 
 - name: "Ensure squid is enabled and started"
-  service:
+  ansible.builtin.service:
     name: squid
     state: started
-    enabled: yes
+    enabled: true
